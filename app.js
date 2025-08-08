@@ -19,11 +19,13 @@ const indexRoutes = require("./routes/index.routes");
 app.use("/api", indexRoutes);
 
 const authRoutes = require("./routes/auth.routes");
-app.use("/auth", authRoutes);
+app.use("/api/auth", authRoutes);;
 
 const taskRoutes = require("./routes/task.routes");
 app.use("/api", taskRoutes);
 
+const categoryRoutes = require("./routes/category.routes");
+app.use("/api", categoryRoutes)
 
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);

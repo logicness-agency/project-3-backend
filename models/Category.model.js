@@ -7,6 +7,3 @@ const categorySchema = new Schema({
 });
 
 module.exports = model("Category", categorySchema);
-
-
-const { Schema, model } = require("mongoose");
