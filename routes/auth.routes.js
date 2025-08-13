@@ -128,4 +128,97 @@ router.get("/verify", isAuthenticated, (req, res, next) => {
   res.status(200).json(req.payload);
 });
 
+
+// BONUS PROFILE PAGE // CHANGING NAME / CHANGING  PASSWORD / DELETE ACCOUNT
+
+// PUT /auth/profile - update user name
+router.put("/profile", isAuthenticated, async (req, res, next) => {
+  try {
+    const { name } = req.body;
+    const userId = req.payload._id;
+
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { name },
+      { new: true }
+    ).select("-password");
+
+    res.status(200).json(updatedUser);
+  } catch (err) {
+    next(err);
+  } 
+});
+// PUT /auth/change-password - Change user password
+router.put("/change-password", isAuthenticated, async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.payload._id;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Both passwords are required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const passwordCorrect = bcrypt.compareSync(currentPassword, user.password);
+    if (!passwordCorrect) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    // Validate new password
+    const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        message:
+          "Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.",
+      });
+    }
+
+    const salt = bcrypt.genSaltSync(saltRounds);
+    const hashedPassword = bcrypt.hashSync(newPassword, salt);
+
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /auth/delete-account - Delete user account
+router.delete("/delete-account", isAuthenticated, async (req, res, next) => {
+  try {
+    const userId = req.payload._id;
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const passwordCorrect = bcrypt.compareSync(password, user.password);
+    if (!passwordCorrect) {
+      return res.status(401).json({ message: "Password is incorrect" });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 module.exports = router;
