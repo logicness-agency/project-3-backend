@@ -26,7 +26,6 @@ router.post("/categories", isAuthenticated, async (req, res, next) => {
     const created = await Category.create(newCategory);
     res.status(201).json(created);
   } catch (err) {
-    
     if (err.code === 11000) {
       return res.status(409).json({ message: "You already have a category with this name." });
     }
