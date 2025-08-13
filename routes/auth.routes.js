@@ -155,29 +155,17 @@ router.put("/profile", isAuthenticated, async (req, res, next) => {
 // PUT /auth/change-password - Change user password
 router.put("/change-password", isAuthenticated, async (req, res, next) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { newPassword } = req.body;
     const userId = req.payload._id;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ message: "Both passwords are required" });
+    if (!newPassword) {
+      return res.status(400).json({ message: "New password is required" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const passwordCorrect = bcrypt.compareSync(currentPassword, user.password);
-    if (!passwordCorrect) {
-      return res.status(401).json({ message: "Current password is incorrect" });
-    }
-
-    // Validate new password
-    const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/;
-    if (!passwordRegex.test(newPassword)) {
+    // Simple length check instead of complex regex
+    if (newPassword.length < 6) {
       return res.status(400).json({
-        message:
-          "Password must have at least 6 characters and contain at least one number, one lowercase and one uppercase letter.",
+        message: "Password must be at least 6 characters",
       });
     }
 
@@ -196,29 +184,11 @@ router.put("/change-password", isAuthenticated, async (req, res, next) => {
 router.delete("/delete-account", isAuthenticated, async (req, res, next) => {
   try {
     const userId = req.payload._id;
-    const { password } = req.body;
-
-    if (!password) {
-      return res.status(400).json({ message: "Password is required" });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const passwordCorrect = bcrypt.compareSync(password, user.password);
-    if (!passwordCorrect) {
-      return res.status(401).json({ message: "Password is incorrect" });
-    }
-
     await User.findByIdAndDelete(userId);
-
     res.status(200).json({ message: "Account deleted successfully" });
   } catch (err) {
     next(err);
   }
 });
-
 
 module.exports = router;
