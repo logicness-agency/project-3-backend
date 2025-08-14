@@ -129,66 +129,6 @@ router.get("/verify", isAuthenticated, (req, res, next) => {
 });
 
 
-// BONUS PROFILE PAGE // CHANGING NAME / CHANGING  PASSWORD / DELETE ACCOUNT
 
-// PUT /auth/profile - update user name
-router.put("/profile", isAuthenticated, async (req, res, next) => {
-  try {
-    const { name } = req.body;
-    const userId = req.payload._id;
-
-    if (!name) {
-      return res.status(400).json({ message: "Name is required" });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { name },
-      { new: true }
-    ).select("-password");
-
-    res.status(200).json(updatedUser);
-  } catch (err) {
-    next(err);
-  } 
-});
-// PUT /auth/change-password - Change user password
-router.put("/change-password", isAuthenticated, async (req, res, next) => {
-  try {
-    const { newPassword } = req.body;
-    const userId = req.payload._id;
-
-    if (!newPassword) {
-      return res.status(400).json({ message: "New password is required" });
-    }
-
-    // Simple length check instead of complex regex
-    if (newPassword.length < 6) {
-      return res.status(400).json({
-        message: "Password must be at least 6 characters",
-      });
-    }
-
-    const salt = bcrypt.genSaltSync(saltRounds);
-    const hashedPassword = bcrypt.hashSync(newPassword, salt);
-
-    await User.findByIdAndUpdate(userId, { password: hashedPassword });
-
-    res.status(200).json({ message: "Password updated successfully" });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// DELETE /auth/delete-account - Delete user account
-router.delete("/delete-account", isAuthenticated, async (req, res, next) => {
-  try {
-    const userId = req.payload._id;
-    await User.findByIdAndDelete(userId);
-    res.status(200).json({ message: "Account deleted successfully" });
-  } catch (err) {
-    next(err);
-  }
-});
 
 module.exports = router;
